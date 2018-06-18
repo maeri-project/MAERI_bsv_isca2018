@@ -1,0 +1,227 @@
+#!/bin/bash
+
+LOGDIR=./Log
+BUILDDIR=./build
+
+SRCDIR=./src
+TYPESDIR=$SRCDIR/types
+LIBDIR=$SRCDIR/lib
+TESTBENCHDIR=$SRCDIR/testbench
+ARTDIR=$SRCDIR/ART
+FIXEDUNITDIR=$SRCDIR/fixedPointUnits
+MULTSWITCHDIR=$SRCDIR/multiplierSwitch
+DISTNETWORKDIR=$SRCDIR/distributionNetwork
+PREFETCHBUFFERDIR=$SRCDIR/prefetchBuffer
+
+INCLUDEDIR=$SRCDIR":"$TYPESDIR":"$TESTBENCHDIR":"$LIBDIR":"$ARTDIR":"$MULTSWITCHDIR":"$DISTNETWORKDIR":"$FIXEDUNITDIR
+
+CXXFLAGS="-Wall -Wno-unused -O0 -g -D_FILE_OFFSET_BITS=64 -j 4"
+
+DEBUG_FLAGS=' -D DUMMY
+'
+# -D DEBUG_IDXSELECTOR
+#-D DEBUG_TOP
+# -D DEBUG_MULTSWITCH
+# -D DEBUG_ART
+# -D DEBUG_DTREE
+# -D DEBUG_PTREE
+# -D DEBUG_ADDERSWITCH
+# -D DEBUG_MSARRAY
+
+function clean {
+	rm -rf $BUILDDIR
+	rm -rf $LOGDIR
+    rm -rf Verilog
+	rm -rf *.v
+	rm -rf ./bdir
+	rm -rf ./build
+	rm -f ./sim.so
+    rm -f *.vcd
+	rm -f ./sim
+}	
+
+function run_test {
+	./$BUILDDIR/bdir/sim
+}
+
+function compile_Generic {
+  mkdir -p $BUILDDIR
+  mkdir -p $BUILDDIR/bdir
+  bsc -u -sim +RTS -K1024M -RTS $DEBUG_FLAGS -D $2 -show-range-conflict -aggressive-conditions -no-warn-action-shadowing -parallel-sim-link 4 -warn-scheduler-effort -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR $TESTBENCHDIR/$1.bsv
+  bsc -u -sim -e mkTestbench +RTS -K1024M -RTS -bdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -simdir $BUILDDIR/bdir -warn-scheduler-effort -parallel-sim-link 4 -Xc++ -O0 -o sim 
+  mv sim $BUILDDIR/bdir
+  mv sim.so $BUILDDIR/bdir
+}
+
+
+function compile_MAERI_Verilog {
+	mkdir -p $BUILDDIR
+	mkdir -p $BUILDDIR/bdir
+	bsc -verilog +RTS -K1024M -RTS -g mkMAERI_Top -steps-max-intervals 200000 -aggressive-conditions -no-warn-action-shadowing -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR -u $SRCDIR/MAERI_Top.bsv
+    mkdir -p Verilog
+    mv $SRCDIR/*.v ./Verilog
+    mv $MULTSWITCHDIR/*.v ./Verilog
+    mv $FIXEDUNITDIR/*.v ./Verilog
+    mv $DISTNETWORKDIR/*.v ./Verilog
+    mv $ARTDIR/*.v ./Verilog
+}
+
+
+
+function compile_DTree {
+  mkdir -p $BUILDDIR
+  mkdir -p $BUILDDIR/bdir
+  bsc -u -sim +RTS -K1024M -RTS -show-range-conflict -aggressive-conditions -no-warn-action-shadowing -parallel-sim-link 36 -warn-scheduler-effort -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR $TESTBENCHDIR/DTreeTestbench.bsv
+  bsc -u -sim -e mkTestBench +RTS -K1024M -RTS -bdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -simdir $BUILDDIR/bdir -warn-scheduler-effort -parallel-sim-link 36 -Xc++ -O0 -o sim 
+  mv sim $BUILDDIR/bdir
+  mv sim.so $BUILDDIR/bdir
+}
+
+function compile_PlainTree {
+  mkdir -p $BUILDDIR
+  mkdir -p $BUILDDIR/bdir
+  bsc -u -sim +RTS -K1024M -RTS -show-range-conflict -aggressive-conditions -no-warn-action-shadowing -parallel-sim-link 36 -warn-scheduler-effort -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR $TESTBENCHDIR/PlainTreeTestbench.bsv
+  bsc -u -sim -e mkTestBench +RTS -K1024M -RTS -bdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -simdir $BUILDDIR/bdir -warn-scheduler-effort -parallel-sim-link 36 -Xc++ -O0 -o sim 
+  mv sim $BUILDDIR/bdir
+  mv sim.so $BUILDDIR/bdir
+}
+
+function compile_PlainTreeController {
+  mkdir -p $BUILDDIR
+  mkdir -p $BUILDDIR/bdir
+  bsc -u -sim +RTS -K1024M -RTS -show-range-conflict -aggressive-conditions -no-warn-action-shadowing -parallel-sim-link 36 -warn-scheduler-effort -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR $TESTBENCHDIR/PlainTreeControllerTestbench.bsv
+  bsc -u -sim -e mkTestBench +RTS -K1024M -RTS -bdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -simdir $BUILDDIR/bdir -warn-scheduler-effort -parallel-sim-link 36 -Xc++ -O0 -o sim 
+  mv sim $BUILDDIR/bdir
+  mv sim.so $BUILDDIR/bdir
+}
+
+function compile_SS {
+  mkdir -p $BUILDDIR
+  mkdir -p $BUILDDIR/bdir
+  bsc -u -sim +RTS -K1024M -RTS -show-range-conflict -aggressive-conditions -no-warn-action-shadowing -parallel-sim-link 36 -warn-scheduler-effort -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR $TESTBENCHDIR/SimpleSwitchTestBench.bsv
+  bsc -u -sim -e mkTestBench +RTS -K1024M -RTS -bdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -simdir $BUILDDIR/bdir -warn-scheduler-effort -parallel-sim-link 36 -Xc++ -O0 -o sim 
+  mv sim $BUILDDIR/bdir
+  mv sim.so $BUILDDIR/bdir
+}
+
+function compile_TPU {
+  mkdir -p $BUILDDIR
+  mkdir -p $BUILDDIR/bdir
+  bsc -u -sim +RTS -K1024M -RTS -show-range-conflict -aggressive-conditions -no-warn-action-shadowing -parallel-sim-link 36 -warn-scheduler-effort -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR $TESTBENCHDIR/TPUTestBench.bsv
+  bsc -u -sim -e mkTPUTestBench +RTS -K1024M -RTS -bdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -simdir $BUILDDIR/bdir -warn-scheduler-effort -parallel-sim-link 36 -Xc++ -O0 -o sim 
+  mv sim $BUILDDIR/bdir
+  mv sim.so $BUILDDIR/bdir
+}
+
+
+
+function compile_ART_Controller {
+  mkdir -p $BUILDDIR
+  mkdir -p $BUILDDIR/bdir
+  bsc -u -sim +RTS -K1024M -RTS -aggressive-conditions -no-warn-action-shadowing -parallel-sim-link 36 -warn-scheduler-effort -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR $TESTBENCHDIR/ARTControllerTestBench.bsv
+  bsc -u -sim -e mkARTControllerTestBench +RTS -K1024M -RTS -bdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -simdir $BUILDDIR/bdir -warn-scheduler-effort -parallel-sim-link 36 -Xc++ -O0 -o sim 
+  mv sim $BUILDDIR/bdir
+  mv sim.so $BUILDDIR/bdir
+}
+
+function compile_ART_Controller_Verilog {
+	mkdir -p $BUILDDIR
+	mkdir -p $BUILDDIR/bdir
+	bsc -verilog -g mkARTController -aggressive-conditions -no-warn-action-shadowing -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR -u $CONTROLLERDIR/ARTController.bsv
+    mkdir -p Verilog
+    mv $CONTROLLERDIR/*.v ./Verilog
+}
+
+function compile_MultSwitch_Verilog {
+	mkdir -p $BUILDDIR
+	mkdir -p $BUILDDIR/bdir
+	bsc -verilog -g mkMultiplierSwitch -aggressive-conditions -no-warn-action-shadowing -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR -u $MULTSWITCHDIR/multiplierSwitch.bsv
+    mkdir -p Verilog
+    mv $FLOATUNITDIR/*.v ./Verilog
+    mv $MULTSWITCHDIR/*.v ./Verilog
+}
+
+
+function compile_ARTNode_Verilog {
+	mkdir -p $BUILDDIR
+	mkdir -p $BUILDDIR/bdir
+	bsc -verilog -g mkARTNode -aggressive-conditions -no-warn-action-shadowing -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR -u $ARTDIR/ARTNode.bsv
+    mkdir -p Verilog
+    mv $FLOATUNITDIR/*.v ./Verilog
+    mv $ARTDIR/*.v ./Verilog
+}
+
+function compile_LocalBuffer_Verilog {
+	mkdir -p $BUILDDIR
+	mkdir -p $BUILDDIR/bdir
+	bsc -verilog -g mkLocalBuffer -aggressive-conditions -no-warn-action-shadowing -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR -u $MULTSWITCHDIR/localBuffer.bsv
+    mkdir -p Verilog
+    mv $FLOATUNITDIR/*.v ./Verilog
+    mv $MULTSWITCHDIR/*.v ./Verilog
+}
+
+function compile_SimpleSwitch_Verilog {
+	mkdir -p $BUILDDIR
+	mkdir -p $BUILDDIR/bdir
+	bsc -verilog -g mkSimpleSwitch -aggressive-conditions -no-warn-action-shadowing -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR -u $DISTNETWORKDIR/simpleSwitch.bsv
+    mkdir -p Verilog
+    mv $DISTNETWORKDIR/*.v ./Verilog
+    mv $FLOATUNITDIR/*.v ./Verilog
+    mv $MULTSWITCHDIR/*.v ./Verilog
+}
+
+function compile_PB_Verilog {
+	mkdir -p $BUILDDIR
+	mkdir -p $BUILDDIR/bdir
+	bsc -verilog -g mkPrefetchBuffer -aggressive-conditions -no-warn-action-shadowing -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR -u $PREFETCHBUFFERDIR/prefetchBuffer.bsv
+    mkdir -p Verilog
+    mv $PREFETCHBUFFERDIR/*.v ./Verilog
+    mv $DISTNETWORKDIR/*.v ./Verilog
+    mv $FLOATUNITDIR/*.v ./Verilog
+    mv $MULTSWITCHDIR/*.v ./Verilog
+}
+
+function compile_LT_Verilog {
+	mkdir -p $BUILDDIR
+	mkdir -p $BUILDDIR/bdir
+	bsc -verilog -g mkLookupTable -aggressive-conditions -no-warn-action-shadowing -simdir $BUILDDIR/bdir -info-dir $BUILDDIR/bdir -bdir $BUILDDIR/bdir -p +:$INCLUDEDIR -u $LTDIR/lookupTable.bsv
+    mkdir -p Verilog
+    mv $LTDIR/*.v ./Verilog
+    mv $PREFETCHBUFFERDIR/*.v ./Verilog
+    mv $DISTNETWORKDIR/*.v ./Verilog
+    mv $FLOATUNITDIR/*.v ./Verilog
+    mv $MULTSWITCHDIR/*.v ./Verilog
+}
+
+
+
+case "$1" in
+    -c) 
+        case "$2" in
+          gen) compile_Generic $3 $4;;
+          TPU) compile_TPU;;
+          ARTController) compile_ART_Controller;;
+          PTCont) compile_PlainTreeController;;
+          DT) compile_DTree;;
+          PT) compile_PlainTree;;
+          ARTNode) compile_ARTNode;;
+          LocalBuffer) compile_LocalBuffer_Verilog;;
+          SS) compile_SS;;
+          PB) compile_PB_Verilog;;
+        esac;;
+    -v)
+        case "$2" in
+          st) compile_Systolic_Verilog;;
+          ARTController) compile_ART_Controller_Verilog;;
+          ARTNode) compile_ARTNode_Verilog;;
+          MultSwitch) compile_MultSwitch_Verilog;;
+          LocalBuffer) compile_LocalBuffer_Verilog;;
+          SS) compile_SimpleSwitch_Verilog;;
+          PB) compile_PB_Verilog;;
+          LT) compile_LT_Verilog;;
+          MAERI) compile_MAERI_Verilog;;
+        esac;;
+    -r) run_test;;
+    -clean) clean;;
+    *) echo "[MAERI] You specified no operation";;    
+esac

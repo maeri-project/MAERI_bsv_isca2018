@@ -1,0 +1,33 @@
+#!/bin/bash
+
+
+SCRIPTSDIR=./scripts
+
+case "$1" in
+    -c) $SCRIPTSDIR/compile -c gen TestMAERI Default;;
+    -ctarg) $SCRIPTSDIR/compile -c gen TestMAERI $2;;
+    -v) $SCRIPTSDIR/compile -v MAERI;;
+    -r) $SCRIPTSDIR/compile -r;;
+    -w) gtkwave dump.vcd;;
+    -clean) 
+            $SCRIPTSDIR/compile -clean;
+            rm -rf *.rpt;
+            rm -rf *.log;
+            rm -rf rpt;
+            rm -rf *.sdc;
+            rm -rf *.ddc;
+            rm -rf *.vcd;
+            rm -rf *.svf;;
+    *) 
+        echo "[MAERI] Usage: ./Maeri -c (Compile simulation with a small synthetic layer)
+               ./Maeri -ctarg (Compilation with a specific target layer)
+                 * argument list
+                    VGG_CONV1
+                    VGG_CONV11
+                    EARLY_SYNTHETIC: a synthetic layer with ealry layer characteristic (large Y/X and small K/C)
+                    LATE_SYNTHETIC:  a synthetic layer with ealry layer characteristic (small Y/X and large K/C)
+                    ** warning: VGG_CONV1 and VGG_CONV11 requires enormous simulation time 
+               ./Maeri -r (Run compiled simulation) 
+               ./Maeri -v (Generate Verilog files) 
+               ./Maeri -clean (Clean intermediate files)"
+esac
